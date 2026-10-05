@@ -2,7 +2,12 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a1f0e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="logo.png">
     <title>SDIRBINGAKKUM - PWA Prototype</title>
     <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
     <style>
@@ -101,6 +106,11 @@
                     <button type="submit" class="w-full py-3.5 rounded-[0.4rem] btn-primary font-semibold tracking-wide flex items-center justify-center gap-2">
                         <span>MASUK</span>
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </button>
+                    
+                    <button id="install-btn" type="button" class="hidden w-full mt-3 py-3 rounded-[0.4rem] bg-white/5 border border-white/10 text-emerald-200/80 font-semibold tracking-wide flex items-center justify-center gap-2 hover:bg-white/10 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span>Install Aplikasi (PWA)</span>
                     </button>
                 </div>
             </form>
@@ -441,6 +451,38 @@
                 modal.classList.remove('flex');
             }, 300);
         }
+
+        // ================= PWA LOGIC =================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.error('SW reg failed', err));
+            });
+        }
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent Chrome from automatically showing the prompt
+            e.preventDefault();
+            deferredPrompt = e;
+            // Update UI to notify the user they can add to home screen
+            const installBtn = document.getElementById('install-btn');
+            if (installBtn) {
+                installBtn.classList.remove('hidden');
+                installBtn.addEventListener('click', async () => {
+                    // Show the install prompt
+                    deferredPrompt.prompt();
+                    // Wait for the user to respond to the prompt
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`User response to the install prompt: ${outcome}`);
+                    deferredPrompt = null;
+                    installBtn.classList.add('hidden');
+                });
+            }
+        });
+        
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('App was installed.');
+        });
     </script>
 </body>
 </html>
